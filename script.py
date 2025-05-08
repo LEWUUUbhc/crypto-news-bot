@@ -3,6 +3,12 @@ import requests
 from datetime import datetime, timedelta, timezone
 from telegram import Bot
 
+print("ENV:", {
+    "API_KEY":   "CRYPTOPANIC_API_KEY" in os.environ,
+    "BOT_TOKEN": "TELEGRAM_TOKEN" in os.environ,
+    "CHAT_ID":   "CHAT_ID" in os.environ
+})
+
 # --- CONFIGURATION ---
 API_KEY   = os.environ["CRYPTOPANIC_API_KEY"]
 BOT_TOKEN = os.environ["TELEGRAM_TOKEN"]
@@ -29,6 +35,9 @@ def send_to_telegram(title, url, source, published_at):
         f"Publiée à {published_at.strftime('%H:%M le %d/%m/%Y UTC')}\n"
         f"{url}"
     )
+    # ton message de debug
+    print("Posting:", title, published_at.isoformat(), url)
+    # **bien indenté** dans la fonction
     bot.send_message(chat_id=CHAT_ID, text=text, parse_mode="Markdown")
 
 def main():
