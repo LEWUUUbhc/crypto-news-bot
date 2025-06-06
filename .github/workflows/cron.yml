@@ -1,4 +1,4 @@
-name: Cron CryptoPanic → Telegram
+name: Cron RSS → Telegram
 
 on:
   schedule:
@@ -16,10 +16,9 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install dependencies
-        run: pip install requests python-telegram-bot
+        run: pip install feedparser python-telegram-bot
       - name: Run script
         env:
-          CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
           TELEGRAM_TOKEN:      ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID:             ${{ secrets.CHAT_ID }}
         run: python script.py
