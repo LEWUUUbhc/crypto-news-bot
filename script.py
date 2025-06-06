@@ -1,32 +1,24 @@
 import os
-import requests
+import feedparser
+from email.utils import parsedate_to_datetime
 from datetime import datetime, timedelta, timezone
 from telegram import Bot
 
 print("ENV:", {
-    "API_KEY":   "CRYPTOPANIC_API_KEY" in os.environ,
     "BOT_TOKEN": "TELEGRAM_TOKEN" in os.environ,
     "CHAT_ID":   "CHAT_ID" in os.environ
 })
 
 # --- CONFIGURATION ---
-API_KEY   = os.environ["CRYPTOPANIC_API_KEY"]
 BOT_TOKEN = os.environ["TELEGRAM_TOKEN"]
 CHAT_ID   = os.environ["CHAT_ID"]
 
-URL = "https://cryptopanic.com/api/v1/posts/"
+FEED_URL = "https://cointelegraph.com/rss"
 bot = Bot(token=BOT_TOKEN)
 
 def fetch_major_news():
-    params = {
-        "auth_token": API_KEY,
-        "public": "true",
-        "filter": "important",
-        "kind": "news"
-    }
-    r = requests.get(URL, params=params)
-    r.raise_for_status()
-    return r.json().get("results", [])
+    feed = feedparser.parse(FEED_URL)
+    return feed.entries
 
 def send_to_telegram(title, url, source, published_at):
     text = (
@@ -44,13 +36,20 @@ def main():
     now = datetime.now(timezone.utc)
     window = now - timedelta(minutes=6)
     for post in fetch_major_news():
-        pub = datetime.fromisoformat(post["published_at"].replace("Z", "+00:00"))
+        if hasattr(post, "published"):
+            pub = parsedate_to_datetime(post.published)
+        else:
+            pub = now
+        if pub.tzinfo is None:
+            pub = pub.replace(tzinfo=timezone.utc)
+        else:
+            pub = pub.astimezone(timezone.utc)
         if pub < window:
             continue
         send_to_telegram(
-            title=post["title"],
-            url=post["url"],
-            source=post["source"]["title"],
+            title=post.title,
+            url=post.link,
+            source="Cointelegraph",
             published_at=pub
         )
 
